@@ -28,6 +28,7 @@ FILE * input, * cleanoutput, * lexemetable, * lexemelist;
 int state = 0;
 char outputBuffer[2000];
 
+
 /**
  * 1 = begin
  * 2 = call/const
@@ -96,20 +97,6 @@ void main () {
     state = 0;
     run_program();
 
-//    printf( "Keyword: %c \n",  );
-//    printf( "Number: %d \n", get_token_id_from_string( ";" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "0" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "9" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "5" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "if" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "begins" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "end" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "." ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "<" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "<=" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( ">" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( ">=" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "" ) );
 }
 
 
@@ -410,9 +397,21 @@ void error_message_exit ( char*errorCode) {
  * @param *char Name of Token to be printed to file
  */
 void print_token_output( char* tokenName ) {
-    //fprintf(cleanoutput, tokenName);
-    //fputs(tokenName, lexemetable);
-    //fputs(tokenName, lexemelist);
+
+    if( strcmp(tokenName, "\n") == 0 ){
+        fprintf(cleanoutput, "%s", outputBuffer);
+        memset(outputBuffer, 0, sizeof(outputBuffer));
+    } else {
+        strcat(outputBuffer, tokenName);
+    }
+
+    int token = get_token_id_from_string( tokenName );
+    fprintf( lexemetable, "%s\t\t%d", tokenName, token);
+    fprintf( lexemelist, "%d ", token );
+    if(token ==2){
+        fprintf( lexemelist, "%s ", tokenName );
+    }
+
 }
 
 /**
@@ -428,10 +427,11 @@ void run_program(){
 
     while ( ( currentChar = get_input() ) != '0' ) {
         // if the state is 0 we are not currently within a token, this token's output does not rely on the previous one's
+        //if state is 0, the program looks for a new keyword
         if ( state == 0 ) {
-            keyword = determine_keyword(get_input(), true);
+            keyword = determine_keyword(currentChar, true);
             curTokenId = get_token_id_from_string( keyword );
-            numCharsToSkip = strlen( keyword ) - 1;
+            numCharsToSkip = strlen( keyword ) - 1;             //
 
             if ( *keyword == "error" ) {
                 // we didn't get a token as a multicharacter string, check for single character tokens
@@ -441,15 +441,17 @@ void run_program(){
                     error_message_exit( 134238 );
                 }
             }
-        }
+        }   //end of if(state == 0)
+
+
 
         //disambiguate next operation
         if ( state == 2 || state == 4 || state == 10 ) {
-            disambiguate_keyword( currentChar );
-            if ( state == -1 ) {
-                error_message_exit( 239492 );
+            disambiguate_keyword( currentChar );    //if the keyword being examined starts with a "c" "e" or "w", it checks which keyword is intended
+            if ( state == -1 ) {                    //if the keyword can't be determined the program exits with an error
+                error_message_exit( 239492 );       //calls a function that closes program
             }
-        } else if ( state > 0 ) {
+        } else if ( state > 0 ) {           //once the state is determined,
             --numCharsToSkip;
 
             if ( ( numCharsToSkip + 1 ) > 1 ) {
