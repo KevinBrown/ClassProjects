@@ -26,6 +26,7 @@ void run_program();
 FILE * input, * cleanoutput, * lexemetable, * lexemelist;
 
 int state = 0;
+char outputBuffer[2000];
 
 /**
  * 1 = begin
@@ -394,6 +395,8 @@ bool manage_file_pointers ( char action[] ) {
 /**
  *  A function to call if the input file contains inappropriate format
  *
+ *  Error codes don't have any reason to them, they are just unique digits so you can find
+ *
  *  @param char* the exit code you'd like to display, should be unique
  */
 void error_message_exit ( char*errorCode) {
@@ -407,35 +410,56 @@ void error_message_exit ( char*errorCode) {
  * @param *char Name of Token to be printed to file
  */
 void print_token_output( char* tokenName ) {
-
-
     //fprintf(cleanoutput, tokenName);
     //fputs(tokenName, lexemetable);
     //fputs(tokenName, lexemelist);
 }
 
-
+/**
+ *
+ */
 void run_program(){
     char* keyword;
     char currentChar;
-    bool disambiguate_next_iteration = false;
+    int numCharsToSkip = 0;
+    int curTokenId;
 
-    manage_file_pointers("open");
+    manage_file_pointers( "open" );
 
     while ( ( currentChar = get_input() ) != '0' ) {
         // if the state is 0 we are not currently within a token, this token's output does not rely on the previous one's
         if ( state == 0 ) {
             keyword = determine_keyword(get_input(), true);
+            curTokenId = get_token_id_from_string( keyword );
+            numCharsToSkip = strlen( keyword ) - 1;
+
+            if ( *keyword == "error" ) {
+                // we didn't get a token as a multicharacter string, check for single character tokens
+                curTokenId = get_token_id_from_string( currentChar );
+
+                if ( curTokenId == -1 ) {
+                    error_message_exit( 134238 );
+                }
+            }
         }
 
-        //if keyword is a token which needs to be disambiguated then do so
-        if ( state == 2 || state == 4 || state == 10) {
-            disambiguate_next_iteration = true;
-        }
-
-        if ( disambiguate_next_iteration ) {
+        //disambiguate next operation
+        if ( state == 2 || state == 4 || state == 10 ) {
             disambiguate_keyword( currentChar );
-            disambiguate_next_iteration = false;
+            if ( state == -1 ) {
+                error_message_exit( 239492 );
+            }
+        } else if ( state > 0 ) {
+            --numCharsToSkip;
+
+            if ( ( numCharsToSkip + 1 ) > 1 ) {
+                continue;
+            } else {
+                state = 0;
+                continue;
+            }
         }
     }
+
+    manage_file_pointers( "close" );
 }
