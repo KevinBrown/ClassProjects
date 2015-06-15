@@ -420,6 +420,7 @@ void run_program(){
     manage_file_pointers( "open" );
 
     while ( ( currentChar = get_input() ) != '0' ) {
+
         // comment handling
         if ( state == 51 ) {
             if ( currentChar == '*' ) {
@@ -451,11 +452,14 @@ void run_program(){
             continue;
         }
 
+
+
+
         // if the state is 0 we are not currently within a token, this token's output does not rely on the previous one's
         // if state is 0, the program looks for a new keyword
         if ( state == 0 ) {
             keyword = determine_keyword( currentChar, true);
-            curTokenId = get_token_id_from_string( *keyword );
+            curTokenId = get_token_id_from_string( keyword );
             numCharsToEnd = strlen( keyword ) - 1;
 
             if ( strcmp( keyword, "error" ) == 0 ) {
@@ -471,6 +475,11 @@ void run_program(){
                 }
             }
         }   //end of if(state == 0)
+
+         printf("%c", currentChar);
+            system("pause");
+
+
 
         // disambiguate next operation
         if ( state == 2 || state == 4 || state == 10 ) {
