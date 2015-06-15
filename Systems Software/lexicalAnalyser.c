@@ -1,22 +1,27 @@
-//
-// Created by Kevin on 6/12/2015.
-//
+/**
+ * Systems Software
+ * Project 2
+ * 6/14/2015
+ *
+ * @author Kevin Brown
+ * @author Chad Armstrong
+ * @license MIT
+ */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
-
-void error_message_exit();
 char* determine_keyword ( char first_statement_char, bool change_state );
-void disambiguate_keyword ( char secondChar );
-char get_input();
-int get_token_id_from_string ( char *tokenChar );
+char* disambiguate_keyword ( char secondChar );
 bool keyword_is_valid ( char keyword[], char validKeyword[], int keywordRemainderLength );
-void manage_file_pointers ( char action[] );
-
-
-
+int get_token_id_from_string ( char *tokenChar );
+char get_input();
+bool manage_file_pointers ( char action[] );
+void error_message_exit ( char* errorCode );
+void print_token_output( char* tokenName );
+void run_program();
 
 FILE * input, * cleanoutput, * lexemetable, * lexemelist;
 
@@ -34,6 +39,7 @@ int state = 0;
  * 9 = var
  * 10 = while/write
  * 11 = epsilon
+ * 12 = odd
  *
  * -1 =  error
  *
@@ -85,6 +91,27 @@ int state = 0;
  * else = 33
  */
 
+void main () {
+    state = 0;
+    run_program();
+
+//    printf( "Keyword: %c \n",  );
+//    printf( "Number: %d \n", get_token_id_from_string( ";" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "0" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "9" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "5" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "if" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "begins" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "end" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "." ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "<" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "<=" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( ">" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( ">=" ) );
+//    printf( "Number: %d \n", get_token_id_from_string( "" ) );
+}
+
+
 /**
  *  Decision tree to determine what the next valid step is for a given first character of a control structure
  *
@@ -100,98 +127,130 @@ int state = 0;
 char* determine_keyword ( char first_statement_char, bool change_state ) {
     switch ( first_statement_char ) {
         case 'b':
+        case 'B':
             //begin
             if ( change_state ) { state = 1; }
             return "begin";
         case 'c':
+        case 'C':
             //call or const
             if ( change_state ) {
                 state = 2;
                 disambiguate_keyword(get_input());
             }
-            if(state =21) return "call";
-            else if(state = 22) return "const";
-            else error_message_exit();
-                                                          //should have an error function
+            return "case1";
         case 'd':
+        case 'D':
             // do keyword
             if ( change_state ) { state = 3; }
             return "do";
         case 'e':
+        case 'E':
             //end or else
             if ( change_state ) {
                 state = 4;
-                 disambiguate_keyword(get_input());
+                disambiguate_keyword(get_input());
             }
-            if(state =31) return "end";
-            else if(state = 32) return "else";
-            else error_message_exit();
-                                                        //should have error function "Problem with incorrect input"
+            return "case2";
         case 'i':
+        case 'I':
             //if
             if ( change_state ) { state = 5; }
             return "if";
         case 't':
+        case 'T':
             //then
             if ( change_state ) { state = 6; }
             return "then";
+        case 'o':
+        case 'O':
+            //odd
+            //forgot this state so the number is 12 until we refactor
+            if ( change_state ) { state = 12; }
+            return "odd";
         case 'p':
+        case 'P':
             //procedure
             if ( change_state ) { state = 7; }
             return "procedure";
         case 'r':
+        case 'R':
             //read
             if ( change_state ) { state = 8; }
             return "read";
         case 'v':
+        case 'V':
             //var
             if ( change_state ) { state = 9; }
             return "var";
         case 'w':
+        case 'W':
             //while or write
             if ( change_state ) {
                 state = 10;
                 disambiguate_keyword(get_input());
             }
-            if(state =41) return "while";
-            else if(state = 42) return "write";
-            else error_message_exit();                                     //error message
-
-
+            return "case3";
         case '\222':
             if ( change_state ) { state = 11; }
             return "\222";
         default:
             if ( change_state ) { state = -1; }
-            return "";
+            return "error";
     }
 }
 
 /**
+ * Disambiguates the second character of a given token
  *
+ * If token not found returns string of "error"
+ *
+ * @param char secondChar
+ * @returns char* String of name of token
  */
-void disambiguate_keyword ( char secondChar ) {
+char* disambiguate_keyword ( char secondChar ) {
     switch ( state ) {
         case 2:
-            // call/const
-            if ( secondChar == 'a' ) { state = 21; } //call
-            else if ( secondChar == 'o') { state = 22; } //const
-            else { state = -1; }
-            return;
+            if ( secondChar == 'a' ) {
+                //call
+                state = 21;
+                return "call";
+            } else if ( secondChar == 'o') {
+                //const
+                state = 22;
+                return "const";
+            } else {
+                state = -1;
+                return "error";
+            }
         case 4:
-            // end/else
-            if ( secondChar == 'n' ) { state = 31; } //end
-            else if ( secondChar == 'l' ) { state = 32; } // else
-            else { state = -1; }
-            return;
+            if ( secondChar == 'n' ) {
+                //end
+                state = 31;
+                return "end";
+            } else if ( secondChar == 'l' ) {
+                // else
+                state = 32;
+                return "else";
+            } else {
+                state = -1;
+                return "error";
+            }
         case 10:
-            // while/write
-            if ( secondChar == 'h' ) { state = 41; } //while
-            else if ( secondChar == 'r' ) { state = 42; } //write
-            else { state = -1; }
-            return;
+            if ( secondChar == 'h' ) {
+                //while
+                state = 41;
+                return "while";
+            } else if ( secondChar == 'r' ) {
+                //write
+                state = 42;
+                return "write";
+            } else {
+                state = -1;
+                return "error";
+            }
         default:
-            return;
+            return "error";
     }
 }
 
@@ -209,85 +268,88 @@ bool keyword_is_valid ( char keyword[], char validKeyword[], int keywordRemainde
             return false;
         }
     }
-
     return true;
 }
 
 /**
+ * Returns the id of any given valid token string or returns -1 on error
  *
- *
+ * @param char* string of token, full keyword if applicable
+ * @returns int
  */
 int get_token_id_from_string ( char *tokenChar ) {
-   if ( strcmp( tokenChar, "\0" ) == 0 ) {
-       //null
-       return 1;
-   } else if ( *tokenChar >= 48 && *tokenChar <= 57) {
-       // any number
-       return 3;
-   } else if ( strcmp( tokenChar, "+" ) == 0 ) {
-       return 4;
-   } else if ( strcmp( tokenChar, "-" ) == 0 ) {
-       return 5;
-   } else if ( strcmp( tokenChar, "*" ) == 0 ) {
-       return 6;
-   } else if ( strcmp( tokenChar, "/" ) == 0 ) {
-       return 7;
-   } else if ( strcmp( tokenChar, "" ) == 0 ) {
-       return 8;
-   } else if ( strcmp( tokenChar, "=" ) == 0 ) {
-       return 9;
-   } else if ( strcmp( tokenChar, "!" ) == 0 ) {
-       return 10;
-   } else if ( strcmp( tokenChar, "<" ) == 0 ) {
-       return 11;
-   } else if ( strcmp( tokenChar, "<=" ) == 0 ) {
-       return 12;
-   } else if ( strcmp( tokenChar, ">" ) == 0 ) {
-       return 13;
-   } else if ( strcmp( tokenChar, ">=" ) == 0 ) {
-       return 14;
-   } else if ( strcmp( tokenChar, "(" ) == 0 ) {
-       return 15;
-   } else if ( strcmp( tokenChar, ")" ) == 0 ) {
-       return 16;
-   } else if ( strcmp( tokenChar, "," ) == 0 ) {
-       return 17;
-   } else if ( strcmp( tokenChar, ";" ) == 0 ) {
-       return 18;
-   } else if ( strcmp( tokenChar, "." ) == 0 ) {
-       return 19;
-   } else if ( strcmp( tokenChar, "becomes" ) == 0 ) {
-       return 20;
-   } else if ( strcmp( tokenChar, "begins" ) == 0 ) {
-       return 21;
-   } else if ( strcmp( tokenChar, "end" ) == 0 ) {
-       return 22;
-   } else if ( strcmp( tokenChar, "if" ) == 0 ) {
-       return 23;
-   } else if ( strcmp( tokenChar, "then" ) == 0 ) {
-       return 24;
-   } else if ( strcmp( tokenChar, "while" ) == 0 ) {
-       return 25;
-   } else if ( strcmp( tokenChar, "do" ) == 0 ) {
-       return 26;
-   } else if ( strcmp( tokenChar, "call" ) == 0 ) {
-       return 27;
-   } else if ( strcmp( tokenChar, "const" ) == 0 ) {
-       return 28;
-   } else if ( strcmp( tokenChar, "var" ) == 0 ) {
-       return 29;
-   } else if ( strcmp( tokenChar, "proc" ) == 0 ) {
-       return 30;
-   } else if ( strcmp( tokenChar, "write" ) == 0 ) {
-       return 31;
-   } else if ( strcmp( tokenChar, "read" ) == 0 ) {
-       return 32;
-   } else if ( strcmp( tokenChar, "else" ) == 0 ) {
-       return 33;
-   } else if ( (*tokenChar >= 65 && *tokenChar <=90) || (*tokenChar >= 97 && *tokenChar <= 122) ) {
-       //variable
-       return 2;
-   }
+    if ( strcmp( tokenChar, "\0" ) == 0 ) {
+        //null
+        return 1;
+    } else if ( *tokenChar >= 48 && *tokenChar <= 57) {
+        // any number
+        return 3;
+    } else if ( strcmp( tokenChar, "+" ) == 0 ) {
+        return 4;
+    } else if ( strcmp( tokenChar, "-" ) == 0 ) {
+        return 5;
+    } else if ( strcmp( tokenChar, "*" ) == 0 ) {
+        return 6;
+    } else if ( strcmp( tokenChar, "/" ) == 0 ) {
+        return 7;
+    } else if ( strcmp( tokenChar, "" ) == 0 ) {
+        return 8;
+    } else if ( strcmp( tokenChar, "=" ) == 0 ) {
+        return 9;
+    } else if ( strcmp( tokenChar, "!" ) == 0 ) {
+        return 10;
+    } else if ( strcmp( tokenChar, "<" ) == 0 ) {
+        return 11;
+    } else if ( strcmp( tokenChar, "<=" ) == 0 ) {
+        return 12;
+    } else if ( strcmp( tokenChar, ">" ) == 0 ) {
+        return 13;
+    } else if ( strcmp( tokenChar, ">=" ) == 0 ) {
+        return 14;
+    } else if ( strcmp( tokenChar, "(" ) == 0 ) {
+        return 15;
+    } else if ( strcmp( tokenChar, ")" ) == 0 ) {
+        return 16;
+    } else if ( strcmp( tokenChar, "," ) == 0 ) {
+        return 17;
+    } else if ( strcmp( tokenChar, ";" ) == 0 ) {
+        return 18;
+    } else if ( strcmp( tokenChar, "." ) == 0 ) {
+        return 19;
+    } else if ( strcmp( tokenChar, "becomes" ) == 0 ) {
+        return 20;
+    } else if ( strcmp( tokenChar, "begins" ) == 0 ) {
+        return 21;
+    } else if ( strcmp( tokenChar, "end" ) == 0 ) {
+        return 22;
+    } else if ( strcmp( tokenChar, "if" ) == 0 ) {
+        return 23;
+    } else if ( strcmp( tokenChar, "then" ) == 0 ) {
+        return 24;
+    } else if ( strcmp( tokenChar, "while" ) == 0 ) {
+        return 25;
+    } else if ( strcmp( tokenChar, "do" ) == 0 ) {
+        return 26;
+    } else if ( strcmp( tokenChar, "call" ) == 0 ) {
+        return 27;
+    } else if ( strcmp( tokenChar, "const" ) == 0 ) {
+        return 28;
+    } else if ( strcmp( tokenChar, "var" ) == 0 ) {
+        return 29;
+    } else if ( strcmp( tokenChar, "proc" ) == 0 ) {
+        return 30;
+    } else if ( strcmp( tokenChar, "write" ) == 0 ) {
+        return 31;
+    } else if ( strcmp( tokenChar, "read" ) == 0 ) {
+        return 32;
+    } else if ( strcmp( tokenChar, "else" ) == 0 ) {
+        return 33;
+    } else if ( (*tokenChar >= 65 && *tokenChar <=90) || (*tokenChar >= 97 && *tokenChar <= 122) ) {
+        //variable
+        return 2;
+    } else {
+        return -1;
+    }
 }
 
 /**
@@ -306,9 +368,12 @@ char get_input () {
 }
 
 /**
+ * Either opens or closes all file pointers, does not validate success of file pointer operation
  *
+ * @param char[] either open or close
+ * @returns bool false if action sring is not valid
  */
-void manage_file_pointers ( char action[] ) {
+bool manage_file_pointers ( char action[] ) {
     if ( strcmp( "open", action ) == 0 ) {
         input = fopen( "input.txt", "r" );
         cleanoutput = fopen( "cleanoutput.txt", "w" );
@@ -319,57 +384,58 @@ void manage_file_pointers ( char action[] ) {
         fclose(cleanoutput);
         fclose(lexemelist);
         fclose(lexemetable);
+    } else {
+        return false;
     }
+
+    return true;
 }
 
 /**
  *  A function to call if the input file contains inappropriate format
+ *
+ *  @param char* the exit code you'd like to display, should be unique
  */
-void error_message_exit(){
-    printf("There was an error reading in the input");
-    exit(1);
+void error_message_exit ( char*errorCode) {
+    printf( "There was an error reading in the input. Location: %s", errorCode);
+    exit( -1 );
 }
 
+/**
+ * Finds and Prints output of token to all relevant output files based on token ID
+ *
+ * @param *char Name of Token to be printed to file
+ */
+void print_token_output( char* tokenName ) {
 
 
+    //fprintf(cleanoutput, tokenName);
+    //fputs(tokenName, lexemetable);
+    //fputs(tokenName, lexemelist);
+}
 
 
 void run_program(){
+    char* keyword;
+    char currentChar;
+    bool disambiguate_next_iteration = false;
+
     manage_file_pointers("open");
 
-    char* keyword = NULL;
-    keyword = determine_keyword(get_input(), true);         //if this returns the correct keyword how will we validate it?
+    while ( ( currentChar = get_input() ) != '0' ) {
+        // if the state is 0 we are not currently within a token, this token's output does not rely on the previous one's
+        if ( state == 0 ) {
+            keyword = determine_keyword(get_input(), true);
+        }
 
+        //if keyword is a token which needs to be disambiguated then do so
+        if ( state == 2 || state == 4 || state == 10) {
+            disambiguate_next_iteration = true;
+        }
 
-    fprintf(cleanoutput, keyword);
-    fputs(keyword, lexemetable);
-    fputs(keyword, lexemelist);
-
-
-
-
-}
-
-
-
-
-void main () {
-  //  manage_file_pointers("open");
-
-
-//    printf( "Keyword: %c \n",  );
-//    printf( "Number: %d \n", get_token_id_from_string( ";" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "0" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "9" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "5" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "if" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "begins" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "end" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "." ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "<" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( "<=" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( ">" ) );
-//    printf( "Number: %d \n", get_token_id_from_string( ">=" ) );
-   // printf( "Number: %d \n", get_token_id_from_string( "" ) );
-
+        if ( disambiguate_next_iteration ) {
+            disambiguate_keyword( currentChar );
+            disambiguate_next_iteration = false;
+        }
+    }
 }
