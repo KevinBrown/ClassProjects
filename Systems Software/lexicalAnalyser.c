@@ -192,6 +192,7 @@ char* determine_keyword ( char first_statement_char, bool change_state ) {
             return ":=";
         case '/':
             if ( change_state ) { state = 51; }
+            return "case4";
         default:
             if ( change_state ) { state = -1; }
             return "error";
@@ -392,12 +393,12 @@ void error_message_exit ( int errorCode) {
  */
 void print_token_output( char* tokenName ) {
 
-    if( strcmp(tokenName, "\n") == 0 ){
+    /*if( strcmp(tokenName, "\n") == 0 ){
         fprintf(cleanoutput, "%s\n", outputBuffer);
         memset(outputBuffer, 0, sizeof(outputBuffer));
     } else {
         strcat(outputBuffer, tokenName);
-    }
+    }*/
 
     int token = get_token_id_from_string( tokenName );
     fprintf( lexemetable, "%s\t\t%d\n", tokenName, token);
@@ -429,7 +430,7 @@ void run_program(){
             } else {
                 // division sign
                 state = 0;
-                // FIXME: print division sign token needed
+                print_token_output( "/" );
             }
         }
 
@@ -470,7 +471,7 @@ void run_program(){
 
                 curTokenId = get_token_id_from_string( &tokenString );
 
-                if ( curTokenId == -1 ) {
+                if ( curTokenId == -1 && currentChar != '\n' && currentChar != '\r' && currentChar != ' ' ) {
                     error_message_exit( 134238 );
                 }
 
@@ -482,10 +483,9 @@ void run_program(){
             }
         }   //end of if(state == 0)
 
-         printf("%c", currentChar);
-         //   system("pause");
-
-
+        if ( state < 50 ) {
+            printf("%c", currentChar);
+        }
 
         // disambiguate next operation
         if ( state == 2 || state == 4 || state == 10 ) {
