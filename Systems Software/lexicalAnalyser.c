@@ -468,7 +468,7 @@ void run_program(){
                 tokenString[0] = currentChar;
                 tokenString[1] = '\0';
 
-                curTokenId = get_token_id_from_string( currentChar );
+                curTokenId = get_token_id_from_string( &tokenString );
 
                 if ( curTokenId == -1 ) {
                     error_message_exit( 134238 );
@@ -477,7 +477,7 @@ void run_program(){
         }   //end of if(state == 0)
 
          printf("%c", currentChar);
-            system("pause");
+         //   system("pause");
 
 
 
