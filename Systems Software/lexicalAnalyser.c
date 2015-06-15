@@ -15,7 +15,7 @@
 
 char* determine_keyword ( char first_statement_char, bool change_state );
 char* disambiguate_keyword ( char secondChar );
-bool keyword_is_valid ( char keyword[], char validKeyword[], int keywordRemainderLength );
+bool keyword_is_valid ( char keyword[], char validKeyword, int keywordRemainderLength );
 int get_token_id_from_string ( char *tokenChar );
 char get_input();
 bool manage_file_pointers ( char action[] );
@@ -53,6 +53,10 @@ char outputBuffer[2000];
  *
  * 41 = while
  * 42 = write
+ *
+ * 51 = / character of possible comment
+ * 52 = * start of comment
+ * 53 = * possible end of comment
  */
 
 /*
@@ -95,7 +99,10 @@ char outputBuffer[2000];
 
 void main () {
     state = 0;
+    manage_file_pointers("open");
+    fprintf(lexemetable, "lexeme\ttoken type");
     run_program();
+    manage_file_pointers("close");
 
 }
 
@@ -182,6 +189,11 @@ char* determine_keyword ( char first_statement_char, bool change_state ) {
         case '\222':
             if ( change_state ) { state = 11; }
             return "\222";
+        case ':':
+            if ( change_state ) { state = 12; }
+            return ":=";
+        case '/':
+            if ( change_state ) { state = 51; }
         default:
             if ( change_state ) { state = -1; }
             return "error";
@@ -240,23 +252,6 @@ char* disambiguate_keyword ( char secondChar ) {
         default:
             return "error";
     }
-}
-
-/**
- * Checks the remainder of a keyword string to determine if the remainder of the string is a valid keyword
- *
- * @param char keyword the keyword that you are testing against
- * @param int keywordRemainderLength the length of the keyword after the determination point is made, (will be either 2 or 1)
- * @returns boolean
- */
-bool keyword_is_valid ( char keyword[], char validKeyword[], int keywordRemainderLength ) {
-    int i;
-    for ( i = 0; i < keywordRemainderLength; ++i ) {
-        if ( keyword[i] != validKeyword[i] ) {
-            return false;
-        }
-    }
-    return true;
 }
 
 /**
