@@ -393,14 +393,14 @@ void error_message_exit ( int errorCode) {
 void print_token_output( char* tokenName ) {
 
     if( strcmp(tokenName, "\n") == 0 ){
-        fprintf(cleanoutput, "%s", outputBuffer);
+        fprintf(cleanoutput, "%s\n", outputBuffer);
         memset(outputBuffer, 0, sizeof(outputBuffer));
     } else {
         strcat(outputBuffer, tokenName);
     }
 
     int token = get_token_id_from_string( tokenName );
-    fprintf( lexemetable, "%s\t\t%d", tokenName, token);
+    fprintf( lexemetable, "%s\t\t%d\n", tokenName, token);
     fprintf( lexemelist, "%d ", token );
     if(token ==2){
         fprintf( lexemelist, "%s ", tokenName );
@@ -473,6 +473,12 @@ void run_program(){
                 if ( curTokenId == -1 ) {
                     error_message_exit( 134238 );
                 }
+
+                print_token_output( tokenString );
+            } else {
+                if ( state == 2 || state == 4 || state == 10 ) {
+                    print_token_output(keyword);
+                }
             }
         }   //end of if(state == 0)
 
@@ -502,6 +508,7 @@ void run_program(){
                 continue;
             }
         }
+
     }
 
     manage_file_pointers( "close" );
