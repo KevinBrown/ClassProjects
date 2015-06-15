@@ -15,11 +15,11 @@
 
 char* determine_keyword ( char first_statement_char, bool change_state );
 char* disambiguate_keyword ( char secondChar );
-bool keyword_is_valid ( char keyword[], char validKeyword, int keywordRemainderLength );
+void keyword_is_valid ( char keyword[], char validKeyword, int keywordRemainderLength );
 int get_token_id_from_string ( char *tokenChar );
 char get_input();
 bool manage_file_pointers ( char action[] );
-void error_message_exit ( char* errorCode );
+void error_message_exit ( int errorCode );
 void print_token_output( char* tokenName );
 void run_program();
 
@@ -101,11 +101,7 @@ void main () {
     manage_file_pointers("open");
     fprintf(lexemetable, "lexeme\ttoken type");
     run_program();
-<<<<<<< HEAD
     manage_file_pointers("close");
-
-=======
->>>>>>> origin/master
 }
 
 
@@ -384,8 +380,8 @@ bool manage_file_pointers ( char action[] ) {
  *
  *  @param char* the exit code you'd like to display, should be unique
  */
-void error_message_exit ( char*errorCode) {
-    printf( "There was an error reading in the input. Location: %s", errorCode);
+void error_message_exit ( int errorCode) {
+    printf( "There was an error reading in the input. Location: %d", errorCode);
     exit( -1 );
 }
 
@@ -459,11 +455,15 @@ void run_program(){
         // if state is 0, the program looks for a new keyword
         if ( state == 0 ) {
             keyword = determine_keyword( currentChar, true);
-            curTokenId = get_token_id_from_string( keyword );
+            curTokenId = get_token_id_from_string( *keyword );
             numCharsToEnd = strlen( keyword ) - 1;
 
-            if ( *keyword == "error" ) {
+            if ( strcmp( keyword, "error" ) == 0 ) {
                 // we didn't get a token as a multicharacter string, check for single character tokens
+                char tokenString[2];
+                tokenString[0] = currentChar;
+                tokenString[1] = '\0';
+
                 curTokenId = get_token_id_from_string( currentChar );
 
                 if ( curTokenId == -1 ) {
@@ -479,15 +479,12 @@ void run_program(){
                 error_message_exit( 239492 );       //calls a function that closes program
             }
         } else if ( state > 0 && state < 50 ) {
-            if (strcmp(keyword[strlen(keyword) - numCharsToEnd], keyword    ) != 0) {
+            if ( keyword[strlen(keyword) - numCharsToEnd] == currentChar ) {
                 printf( "Keyword %s does not have all characters matching the correct value. Syntax Error.", keyword );
                 error_message_exit( 121858 );
             }
 
             if ( numCharsToEnd > 1 ) {
-                if ( !keyword_is_valid( *keyword, curTokenId, numCharsToEnd ) ) {
-
-                }
                 --numCharsToEnd;
                 continue;
             } else {
