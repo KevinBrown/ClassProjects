@@ -15,7 +15,7 @@
 
 char* determine_keyword ( char first_statement_char, bool change_state );
 char* disambiguate_keyword ( char secondChar );
-bool keyword_is_valid ( char keyword[], char validKeyword[], int keywordRemainderLength );
+bool keyword_is_valid ( char keyword[], char validKeyword, int keywordRemainderLength );
 int get_token_id_from_string ( char *tokenChar );
 char get_input();
 bool manage_file_pointers ( char action[] );
@@ -27,7 +27,6 @@ FILE * input, * cleanoutput, * lexemetable, * lexemelist;
 
 int state = 0;
 char outputBuffer[2000];
-
 
 /**
  * 1 = begin
@@ -53,6 +52,10 @@ char outputBuffer[2000];
  *
  * 41 = while
  * 42 = write
+ *
+ * 51 = / character of possible comment
+ * 52 = * start of comment
+ * 53 = * possible end of comment
  */
 
 /*
@@ -96,7 +99,6 @@ char outputBuffer[2000];
 void main () {
     state = 0;
     run_program();
-
 }
 
 
@@ -182,6 +184,11 @@ char* determine_keyword ( char first_statement_char, bool change_state ) {
         case '\222':
             if ( change_state ) { state = 11; }
             return "\222";
+        case ':':
+            if ( change_state ) { state = 12; }
+            return ":=";
+        case '/':
+            if ( change_state ) { state = 51; }
         default:
             if ( change_state ) { state = -1; }
             return "error";
@@ -243,23 +250,6 @@ char* disambiguate_keyword ( char secondChar ) {
 }
 
 /**
- * Checks the remainder of a keyword string to determine if the remainder of the string is a valid keyword
- *
- * @param char keyword the keyword that you are testing against
- * @param int keywordRemainderLength the length of the keyword after the determination point is made, (will be either 2 or 1)
- * @returns boolean
- */
-bool keyword_is_valid ( char keyword[], char validKeyword[], int keywordRemainderLength ) {
-    int i;
-    for ( i = 0; i < keywordRemainderLength; ++i ) {
-        if ( keyword[i] != validKeyword[i] ) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
  * Returns the id of any given valid token string or returns -1 on error
  *
  * @param char* string of token, full keyword if applicable
@@ -269,6 +259,7 @@ int get_token_id_from_string ( char *tokenChar ) {
     if ( strcmp( tokenChar, "\0" ) == 0 ) {
         //null
         return 1;
+        //FIXME State 2
     } else if ( *tokenChar >= 48 && *tokenChar <= 57) {
         // any number
         return 3;
@@ -280,7 +271,7 @@ int get_token_id_from_string ( char *tokenChar ) {
         return 6;
     } else if ( strcmp( tokenChar, "/" ) == 0 ) {
         return 7;
-    } else if ( strcmp( tokenChar, "" ) == 0 ) {
+    } else if ( strcmp( tokenChar, "odd" ) == 0 ) {
         return 8;
     } else if ( strcmp( tokenChar, "=" ) == 0 ) {
         return 9;
@@ -366,7 +357,7 @@ bool manage_file_pointers ( char action[] ) {
         input = fopen( "input.txt", "r" );
         cleanoutput = fopen( "cleanoutput.txt", "w" );
         lexemetable = fopen( "lememetable.txt", "w" );
-        lexemelist - fopen( "lexmelist.txt", "w");
+        lexemelist = fopen( "lexmelist.txt", "w");
     } else if ( strcmp( "close", action ) == 0 ) {
         fclose(input);
         fclose(cleanoutput);
@@ -420,18 +411,49 @@ void print_token_output( char* tokenName ) {
 void run_program(){
     char* keyword;
     char currentChar;
-    int numCharsToSkip = 0;
+    int numCharsToEnd = 0;
     int curTokenId;
 
     manage_file_pointers( "open" );
 
     while ( ( currentChar = get_input() ) != '0' ) {
+        // comment handling
+        if ( state == 51 ) {
+            if ( currentChar == '*' ) {
+                state = 52;
+                continue;
+            } else {
+                // division sign
+                state = 0;
+                // FIXME: print division sign token needed
+            }
+        }
+
+        if ( state == 52 ) {
+            // we are inside a comment, ignore everything until end of comment or end of file
+            if ( currentChar == '*' ) {
+                // possible end of comment
+                state = 53;
+            }
+            continue;
+        }
+
+        if ( state == 53 ) {
+            if ( currentChar == '/') {
+                // congrats we hit the end of the comment
+                state = 0;
+            } else {
+                state = 52;
+            }
+            continue;
+        }
+
         // if the state is 0 we are not currently within a token, this token's output does not rely on the previous one's
-        //if state is 0, the program looks for a new keyword
+        // if state is 0, the program looks for a new keyword
         if ( state == 0 ) {
-            keyword = determine_keyword(currentChar, true);
+            keyword = determine_keyword( currentChar, true);
             curTokenId = get_token_id_from_string( keyword );
-            numCharsToSkip = strlen( keyword ) - 1;             //
+            numCharsToEnd = strlen( keyword ) - 1;
 
             if ( *keyword == "error" ) {
                 // we didn't get a token as a multicharacter string, check for single character tokens
@@ -443,21 +465,27 @@ void run_program(){
             }
         }   //end of if(state == 0)
 
-
-
-        //disambiguate next operation
+        // disambiguate next operation
         if ( state == 2 || state == 4 || state == 10 ) {
             disambiguate_keyword( currentChar );    //if the keyword being examined starts with a "c" "e" or "w", it checks which keyword is intended
             if ( state == -1 ) {                    //if the keyword can't be determined the program exits with an error
                 error_message_exit( 239492 );       //calls a function that closes program
             }
-        } else if ( state > 0 ) {           //once the state is determined,
-            --numCharsToSkip;
+        } else if ( state > 0 && state < 50 ) {
+            if (strcmp(keyword[strlen(keyword) - numCharsToEnd], keyword    ) != 0) {
+                printf( "Keyword %s does not have all characters matching the correct value. Syntax Error.", keyword );
+                error_message_exit( 121858 );
+            }
 
-            if ( ( numCharsToSkip + 1 ) > 1 ) {
+            if ( numCharsToEnd > 1 ) {
+                if ( !keyword_is_valid( *keyword, curTokenId, numCharsToEnd ) ) {
+
+                }
+                --numCharsToEnd;
                 continue;
             } else {
                 state = 0;
+                --numCharsToEnd;
                 continue;
             }
         }
