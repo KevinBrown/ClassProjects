@@ -3,5 +3,5 @@ project(Systems_Software)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu11")
 
-set(SOURCE_FILES lexicalAnalyser.c)
-add_executable(Systems_Software ${SOURCE_FILES})
+set(SOURCE_FILES Compile.c)
+add_executable(Systems_Software ${SOURCE_FILES} Compile.c)
