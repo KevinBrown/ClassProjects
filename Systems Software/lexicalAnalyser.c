@@ -25,7 +25,7 @@ void run_program();
 
 FILE * input, * cleanoutput, * lexemetable, * lexemelist;
 
-int state = 0;
+int lexmeState = 0;
 char outputBuffer[2000];
 
 /**
@@ -97,7 +97,7 @@ char outputBuffer[2000];
  */
 
 void main () {
-    state = 0;
+    lexmeState = 0;
     manage_file_pointers("open");
     fprintf(lexemetable, "lexeme\ttoken type");
     run_program();
@@ -115,86 +115,86 @@ void main () {
  *  error - did not encounter a valid keyword
  *
  * @param char the first character of the potential keyword
- * @returns int the expected state for the keyword
+ * @returns int the expected lexmeState for the keyword
  */
 char* determine_keyword ( char first_statement_char, bool change_state ) {
     switch ( first_statement_char ) {
         case 'b':
         case 'B':
             //begin
-            if ( change_state ) { state = 1; }
+            if ( change_state ) { lexmeState = 1; }
             return "begin";
         case 'c':
         case 'C':
             //call or const
             if ( change_state ) {
-                state = 2;
+                lexmeState = 2;
                 disambiguate_keyword(get_input());
             }
             return "case1";
         case 'd':
         case 'D':
             // do keyword
-            if ( change_state ) { state = 3; }
+            if ( change_state ) { lexmeState = 3; }
             return "do";
         case 'e':
         case 'E':
             //end or else
             if ( change_state ) {
-                state = 4;
+                lexmeState = 4;
                 disambiguate_keyword(get_input());
             }
             return "case2";
         case 'i':
         case 'I':
             //if
-            if ( change_state ) { state = 5; }
+            if ( change_state ) { lexmeState = 5; }
             return "if";
         case 't':
         case 'T':
             //then
-            if ( change_state ) { state = 6; }
+            if ( change_state ) { lexmeState = 6; }
             return "then";
         case 'o':
         case 'O':
             //odd
-            //forgot this state so the number is 12 until we refactor
-            if ( change_state ) { state = 12; }
+            //forgot this lexmeState so the number is 12 until we refactor
+            if ( change_state ) { lexmeState = 12; }
             return "odd";
         case 'p':
         case 'P':
             //procedure
-            if ( change_state ) { state = 7; }
+            if ( change_state ) { lexmeState = 7; }
             return "procedure";
         case 'r':
         case 'R':
             //read
-            if ( change_state ) { state = 8; }
+            if ( change_state ) { lexmeState = 8; }
             return "read";
         case 'v':
         case 'V':
             //var
-            if ( change_state ) { state = 9; }
+            if ( change_state ) { lexmeState = 9; }
             return "var";
         case 'w':
         case 'W':
             //while or write
             if ( change_state ) {
-                state = 10;
+                lexmeState = 10;
                 disambiguate_keyword(get_input());
             }
             return "case3";
         case '\222':
-            if ( change_state ) { state = 11; }
+            if ( change_state ) { lexmeState = 11; }
             return "\222";
         case ':':
-            if ( change_state ) { state = 12; }
+            if ( change_state ) { lexmeState = 12; }
             return ":=";
         case '/':
-            if ( change_state ) { state = 51; }
+            if ( change_state ) { lexmeState = 51; }
             return "case4";
         default:
-            if ( change_state ) { state = -1; }
+            if ( change_state ) { lexmeState = -1; }
             return "error";
     }
 }
@@ -208,44 +208,44 @@ char* determine_keyword ( char first_statement_char, bool change_state ) {
  * @returns char* String of name of token
  */
 char* disambiguate_keyword ( char secondChar ) {
-    switch ( state ) {
+    switch (lexmeState) {
         case 2:
             if ( secondChar == 'a' ) {
                 //call
-                state = 21;
+                lexmeState = 21;
                 return "call";
             } else if ( secondChar == 'o') {
                 //const
-                state = 22;
+                lexmeState = 22;
                 return "const";
             } else {
-                state = -1;
+                lexmeState = -1;
                 return "error";
             }
         case 4:
             if ( secondChar == 'n' ) {
                 //end
-                state = 31;
+                lexmeState = 31;
                 return "end";
             } else if ( secondChar == 'l' ) {
                 // else
-                state = 32;
+                lexmeState = 32;
                 return "else";
             } else {
-                state = -1;
+                lexmeState = -1;
                 return "error";
             }
         case 10:
             if ( secondChar == 'h' ) {
                 //while
-                state = 41;
+                lexmeState = 41;
                 return "while";
             } else if ( secondChar == 'r' ) {
                 //write
-                state = 42;
+                lexmeState = 42;
                 return "write";
             } else {
-                state = -1;
+                lexmeState = -1;
                 return "error";
             }
         default:
@@ -409,9 +409,6 @@ void print_token_output( char* tokenName ) {
 
 }
 
-/**
- *
- */
 void run_program(){
     char* keyword;
     char currentChar;
@@ -423,32 +420,32 @@ void run_program(){
     while ( ( currentChar = get_input() ) != '0' ) {
 
         // comment handling
-        if ( state == 51 ) {
+        if ( lexmeState == 51 ) {
             if ( currentChar == '*' ) {
-                state = 52;
+                lexmeState = 52;
                 continue;
             } else {
                 // division sign
-                state = 0;
+                lexmeState = 0;
                 print_token_output( "/" );
             }
         }
 
-        if ( state == 52 ) {
+        if ( lexmeState == 52 ) {
             // we are inside a comment, ignore everything until end of comment or end of file
             if ( currentChar == '*' ) {
                 // possible end of comment
-                state = 53;
+                lexmeState = 53;
             }
             continue;
         }
 
-        if ( state == 53 ) {
+        if ( lexmeState == 53 ) {
             if ( currentChar == '/') {
                 // congrats we hit the end of the comment
-                state = 0;
+                lexmeState = 0;
             } else {
-                state = 52;
+                lexmeState = 52;
             }
             continue;
         }
@@ -456,9 +453,9 @@ void run_program(){
 
 
 
-        // if the state is 0 we are not currently within a token, this token's output does not rely on the previous one's
-        // if state is 0, the program looks for a new keyword
-        if ( state == 0 ) {
+        // if the lexmeState is 0 we are not currently within a token, this token's output does not rely on the previous one's
+        // if lexmeState is 0, the program looks for a new keyword
+        if ( lexmeState == 0 ) {
             keyword = determine_keyword( currentChar, true);
             curTokenId = get_token_id_from_string( keyword );
             numCharsToEnd = strlen( keyword ) - 1;
@@ -477,23 +474,23 @@ void run_program(){
 
                 print_token_output( tokenString );
             } else {
-                if ( state == 2 || state == 4 || state == 10 ) {
+                if ( lexmeState == 2 || lexmeState == 4 || lexmeState == 10 ) {
                     print_token_output(keyword);
                 }
             }
-        }   //end of if(state == 0)
+        }   //end of if(lexmeState == 0)
 
-        if ( state < 50 ) {
+        if ( lexmeState < 50 ) {
             printf("%c", currentChar);
         }
 
         // disambiguate next operation
-        if ( state == 2 || state == 4 || state == 10 ) {
+        if ( lexmeState == 2 || lexmeState == 4 || lexmeState == 10 ) {
             disambiguate_keyword( currentChar );    //if the keyword being examined starts with a "c" "e" or "w", it checks which keyword is intended
-            if ( state == -1 ) {                    //if the keyword can't be determined the program exits with an error
+            if ( lexmeState == -1 ) {                    //if the keyword can't be determined the program exits with an error
                 error_message_exit( 239492 );       //calls a function that closes program
             }
-        } else if ( state > 0 && state < 50 ) {
+        } else if ( lexmeState > 0 && lexmeState < 50 ) {
             if ( keyword[strlen(keyword) - numCharsToEnd] == currentChar ) {
                 printf( "Keyword %s does not have all characters matching the correct value. Syntax Error.", keyword );
                 error_message_exit( 121858 );
@@ -503,7 +500,7 @@ void run_program(){
                 --numCharsToEnd;
                 continue;
             } else {
-                state = 0;
+                lexmeState = 0;
                 --numCharsToEnd;
                 continue;
             }
