@@ -12,14 +12,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Libraries
-#include <uthash/uthash.h>
-
-// User Defined
+// Project Functions
 #include "assembly.h"
-
-// Global Setting Macros
-#define MAX_VAR_SIZE 20
 
 // General I/O Functions
 void error_message_exit ( int errorCode );
@@ -27,9 +21,6 @@ void error_message_exit ( int errorCode );
 // Driver Functions
 int determine_switches ( int argc, char *argv );
 void run_appropiate_sections ( int flag );
-void print_lexmes ();
-void print_assembly_code ();
-void print_vm_execution ();
 
 // Lexme Functions
 
@@ -44,10 +35,7 @@ int lexmeState = 0;
 FILE  *input, *lexemelist;
 
 // Structs
-struct token {
-    int tokenID;
-    char name[MAX_VAR_SIZE];
-};
+
 
 void main ( int argc, char* argv[] ) {
     run_appropiate_sections(  determine_switches( argc, argv ) );
@@ -117,19 +105,3 @@ void run_appropiate_sections ( int flag ) {
         print_vm_execution();
     }
 }
-
-void print_lexmes () {
-
-}
-
-void print_assembly_code () {
-
-}
-
-void
-
-
-void print_vm_execution () {
-
-}
-
